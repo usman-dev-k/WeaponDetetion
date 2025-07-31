@@ -1,8 +1,5 @@
-torch
-torchvision
-torchaudio
+ultralytics
+streamlit
 opencv-python
 numpy
 Pillow
-streamlit
-ultralytics
