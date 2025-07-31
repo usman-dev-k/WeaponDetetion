@@ -3,7 +3,7 @@ from ultralytics import YOLO
 
 @st.cache_resource
 def load_model():
-    model_path = "yolov5s.pt"
+    model_path = "yolov8nn.pt"
     try:
         model = YOLO(model_path)
         st.success("✅ Model loaded successfully!")
