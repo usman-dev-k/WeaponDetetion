@@ -1,24 +1,25 @@
 import streamlit as st
-import torch
+from ultralytics import YOLO
 
 @st.cache_resource
 def load_model():
-    model_path = 'yolov5s.pt'
-
+    model_path = "yolov5s.pt"
     try:
-        # Try loading with default (safe) config first
-        model = torch.load(model_path)
-    except Exception as e:
-        st.warning("Safe loading failed. Attempting full load (trusted only)...")
-        # Only do this if you trust the source
-        model = torch.load(model_path, weights_only=False)
-
-    if "model" in model and hasattr(model["model"], "names"):
-        st.success("Model loaded successfully.")
-        st.write("Classes:", model["model"].names)
+        model = YOLO(model_path)
+        st.success("✅ Model loaded successfully!")
         return model
-    else:
-        st.error("Model does not contain 'names'. It may not be trained correctly.")
+    except Exception as e:
+        st.error(f"❌ Failed to load model: {e}")
         return None
 
+st.title("🔍 Weapon Detection Model Info")
+
 model = load_model()
+
+if model:
+    try:
+        class_names = model.names  # This should return a dict
+        st.subheader("📦 Detected Classes:")
+        st.write(list(class_names.values()))
+    except Exception as e:
+        st.error(f"Couldn't extract class names: {e}")
