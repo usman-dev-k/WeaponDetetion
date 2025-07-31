@@ -1,39 +1,43 @@
 import streamlit as st
-import torch
-import numpy as np
 from PIL import Image
+import numpy as np
+from ultralytics import YOLO
 
-st.set_page_config(page_title="Weapon Detection", layout="centered")
-st.title("🔍 Weapon Detection with YOLOv5")
-st.write("Upload an image to detect weapons using your custom YOLOv5 model.")
-
-# Load YOLOv5 model from torch.hub (automatically downloads repo)
+# Load model
 @st.cache_resource
 def load_model():
-    return torch.hub.load('ultralytics/yolov5', 'custom', path='yolov5.pt')
+    return YOLO("yolov5.pt")  # Or "yolov8.pt" if you're using YOLOv8
 
 model = load_model()
 
-uploaded_file = st.file_uploader("Upload an image...", type=["jpg", "jpeg", "png"])
+st.set_page_config(page_title="Weapon Detection")
+st.title("🔍 Weapon Detection App")
+st.write("Upload an image to detect weapons using a YOLO model.")
+
+uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
 
 if uploaded_file:
     image = Image.open(uploaded_file).convert("RGB")
     st.image(image, caption="Uploaded Image", use_column_width=True)
 
-    with st.spinner("Running detection..."):
-        results = model(np.array(image))
+    # Run detection
+    with st.spinner("Detecting..."):
+        results = model.predict(source=np.array(image), save=False)
 
-    results.render()
-    st.image(results.ims[0], caption="Detection Results", use_column_width=True)
+    # Draw results
+    res_plotted = results[0].plot()
+    st.image(res_plotted, caption="Detection Result", use_column_width=True)
 
-    detected = results.pandas().xyxy[0]
-    classes = detected['name'].tolist()
+    # Get detected class names
+    names = model.names
+    detections = results[0].boxes.cls.tolist()
+    detected_labels = [names[int(i)] for i in detections]
 
-    if detected.empty:
+    if not detected_labels:
         st.success("✅ No objects detected.")
     else:
-        st.info(f"Detected: {', '.join(set(classes))}")
-        if any(c.lower() in ['gun', 'knife', 'weapon', 'pistol', 'rifle'] for c in classes):
+        st.info(f"Detected: {', '.join(set(detected_labels))}")
+        if any(lbl.lower() in ["weapon", "gun", "knife", "pistol", "rifle"] for lbl in detected_labels):
             st.error("🚨 Weapon Detected!")
         else:
             st.success("✅ No weapon detected.")
