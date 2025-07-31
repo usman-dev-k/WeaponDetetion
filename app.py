@@ -1,12 +1,24 @@
+import streamlit as st
 import torch
 
-# Load your model file
-model_path = "yolov5s.pt"
-model = torch.load(model_path, map_location=torch.device("cpu"))
+@st.cache_resource
+def load_model():
+    model_path = 'yolov5s.pt'
 
-# Check the class names
-if "model" in model and hasattr(model["model"], "names"):
-    print("✅ Model loaded successfully.")
-    print("Classes:", model["model"].names)
-else:
-    print("❌ Model does not appear to have class names (not trained or corrupted).")
+    try:
+        # Try loading with default (safe) config first
+        model = torch.load(model_path)
+    except Exception as e:
+        st.warning("Safe loading failed. Attempting full load (trusted only)...")
+        # Only do this if you trust the source
+        model = torch.load(model_path, weights_only=False)
+
+    if "model" in model and hasattr(model["model"], "names"):
+        st.success("Model loaded successfully.")
+        st.write("Classes:", model["model"].names)
+        return model
+    else:
+        st.error("Model does not contain 'names'. It may not be trained correctly.")
+        return None
+
+model = load_model()
