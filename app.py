@@ -6,7 +6,7 @@ from ultralytics import YOLO
 # Load model
 @st.cache_resource
 def load_model():
-    return YOLO("yolov5.pt")  # Or "yolov8.pt" if you're using YOLOv8
+    return YOLO("yolov5s.pt")  # Or "yolov8.pt" if you're using YOLOv8
 
 model = load_model()
 
